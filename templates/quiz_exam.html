@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    
+    {% if total_correct_answer == 0 %}
+    <h1>Quiz {{quiz_question_count}}</h1>
+    <br><br><br>
+    
+    <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+        <form action="/quiz-exam/{{quiz_set_id}}" method="POST">
+            {{ form.hidden_tag() }}
+
+            {% for quiz_question in quiz_questions %}
+            <p>{{quiz_question.id}}. {{quiz_question.question}}</p>
+            <input type="radio" id="question-{{quiz_question.id}}-option-1" name="question-{{quiz_question.id}}" value="1">
+            <label for="question-{{quiz_question.id}}-option-1">{{quiz_question.option1}}</label><br>
+            <input type="radio" id="question-{{quiz_question.id}}-option-2" name="question-{{quiz_question.id}}" value="2">
+            <label for="question-{{quiz_question.id}}-option-2">{{quiz_question.option2}}</label><br>
+            <input type="radio" id="question-{{quiz_question.id}}-option-3" name="question-{{quiz_question.id}}" value="3">
+            <label for="question-{{quiz_question.id}}-option-3">{{quiz_question.option3}}</label><br>
+            <input type="radio" id="question-{{quiz_question.id}}-option-4" name="question-{{quiz_question.id}}" value="4">
+            <label for="question-{{quiz_question.id}}-option-4">{{quiz_question.option4}}</label><br>
+            <br> <br> 
+            {% endfor %}
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    {% else %}   
+    <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+         <h2>You have answered {{total_correct_answer}} out of {{quiz_question_count}} questions correctly.</p>
+    </div>
+    {% endif %}
+    
+   
+
+{% endblock %}

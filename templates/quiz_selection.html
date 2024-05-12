@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+
+    <h1>Quiz Selection</h1>
+    <br><br><br>
+    
+    <table class="table table-hover table-bordered table-striped">
+        {% for quiz_set, is_quiz_taken in quiz_sets %}
+            
+                <tr>
+                    <td>
+                        {% if  is_quiz_taken %}
+                            {{quiz_set.id}}.  {{quiz_set.name}} <a href="" class="btn btn-outline-secondary btn-sm">View Result</a>
+                        {% else %} 
+                            
+                            {{quiz_set.id}}.  {{quiz_set.name}} <a href="{{url_for('quiz_exam',quiz_set_id=quiz_set.id)}}" class="btn btn-outline-secondary btn-sm">Start Quiz</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            
+          
+        {% endfor %}
+    </table>
+
+{% endblock %}
+

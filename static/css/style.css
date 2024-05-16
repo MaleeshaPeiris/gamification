@@ -3,7 +3,29 @@ h1 {
     font-size: 60px;
 }
 
-
 body{
     background: #f4f4f4;
+}
+.post-info {
+    font-size: 10px; /* Adjust font size as needed */
+    color: rgb(65, 65, 75);
+}
+
+#add-post-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f9f9f9; /* Background color for the container */
+    padding: 10px; /* Adjust padding as needed */
+    box-sizing: border-box;
+    border-top: 1px solid #ccc; /* Add border on top of the container */
+}
+
+#add-post-form {
+    margin: 0 auto;
+    max-width: 600px; /* Adjust maximum width of the form */
+}
+#posts-container {
+    padding-bottom: 200px; /* Adjust the value as needed */
 }

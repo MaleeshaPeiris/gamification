@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, SelectField
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, SelectField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, Length
 from wtforms.widgets import TextArea
 from flask_ckeditor import CKEditorField
@@ -35,7 +35,15 @@ class PostForm(FlaskForm):
     author = StringField("Author")
     slug = StringField("Slug", validators=[DataRequired()])
     submit = SubmitField("Submit")   
-         
+
+class NewPostForm(FlaskForm):
+    question = TextAreaField('Question', validators=[DataRequired()])
+    submit = SubmitField('Post')
+
+class NewCommentForm(FlaskForm):
+    comment = TextAreaField('Comment',validators=[DataRequired()])
+    submit = SubmitField('Post')
+        
 # Create a Search Form       
 class SearchForm(FlaskForm):
     searched = StringField("Searched", validators=[DataRequired()])

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Discussion Forum - Course {{ id }}</h1>
+    <div id="posts-container">
+        {% for post in posts %}
+            <div>
+                </br>
+                <p class="post-info">Posted by user ID: {{ post.user_id }} | Date: {{ post.posted_date }}</p>
+                <p>{{ post.content }}</p>
+                <a class="btn btn-secondary btn-sm">Comment</a>
+                </br>
+            </div>
+            <!-- Display comments for each post -->
+            {% for comment in comments %}
+                {% if comment.post_id == post.id %}
+                    <div>
+                        <p class="post-info">Comment by user ID: {{ comment.user_id }} | Date: {{ comment.commented_date }}</p>
+                        <p>{{ comment.content }}</p>
+                    </div>
+                    
+
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+    <div id = "add-post-container">
+        <h2>Ask questions</h2>
+        <form id ="add-post-form"  method="POST" action="{{ url_for('forum_page', id=id) }}">
+            {{ post_form.hidden_tag() }}
+            <div>
+                {{ post_form.question.label }}
+                {{ post_form.question }}
+            </div>
+            </br>
+            <div>
+                {{ post_form.submit() }}
+            </div>
+        </form>
+    </div>
+{% endblock %}

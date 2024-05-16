@@ -15,7 +15,7 @@
         {% for enrolled_course in enrolled_courses %}
             <tr>
                 <td>
-                    {{enrolled_course.id}}. <a href="{{url_for('forum_page',id=enrolled_course.id)}}">{{enrolled_course.name}}</a>
+                     <a href="{{url_for('forum_page',id=enrolled_course.id)}}">{{enrolled_course.name}}</a>
                 </td>
             </tr>
         {% endfor %}

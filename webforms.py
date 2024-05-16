@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, SelectField
 from wtforms.validators import DataRequired, EqualTo, Length
 from wtforms.widgets import TextArea
 from flask_ckeditor import CKEditorField
@@ -14,6 +14,10 @@ class UserForm(FlaskForm):
      password_hash = PasswordField('Password', validators=[DataRequired(), EqualTo('password_hash2', message='Passwords Must Match!')])
      password_hash2 = PasswordField('Confirm Password', validators=[DataRequired()])
      submit = SubmitField("Submit")    
+
+#create Enrollment form
+class Enrollment(FlaskForm):
+    submit = SubmitField("Submit")
 
 
 #Create Login Form   

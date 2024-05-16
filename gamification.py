@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from webforms import UserForm, LoginForm, PostForm, SearchForm, NamerForm, PasswordForm
 from flask_ckeditor import CKEditor
+import numpy as np
 
 #export FLASK_ENV=development
 #export FLASK_APP=gamification.py
@@ -20,13 +21,14 @@ ckeditor = CKEditor(app)
 #Old SQLite Database
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 #New MySQL DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/gamification'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/gamification'
 
 #Secret Key
 app.config['SECRET_KEY'] = "@45665Fdsdss456kl"
 #Initialize the Database
 db = SQLAlchemy(app)
 migrate=Migrate(app,db)
+app.app_context().push()
 
 # Flask Login configurations
 login_manager = LoginManager()
@@ -164,6 +166,7 @@ def logout():
 def dashboard():
     form=UserForm()
     id = current_user.id
+    enrolled_courses = get_enrolled_courses(id)
     user_to_update=User.query.get_or_404(id)
     if request.method == 'POST':
         user_to_update.first_name =  request.form['first_name']
@@ -175,17 +178,17 @@ def dashboard():
             flash("User Updated Successfully!")
             return render_template("dashboard.html", 
                                     form=form,
-                                    user_to_update=user_to_update)
+                                    user_to_update=user_to_update, enrolled_courses=enrolled_courses)
 
         except:
             flash("Looks like there was a problem....try again!")
             return render_template("dashboard.html", 
                                     form=form,
-                                    user_to_update=user_to_update)
+                                    user_to_update=user_to_update, enrolled_courses=enrolled_courses)
     else:
         return render_template("dashboard.html", 
                                     form=form,
-                                    user_to_update=user_to_update)
+                                    user_to_update=user_to_update, enrolled_courses=enrolled_courses)
     return render_template('dashboard.html')
 
 
@@ -205,10 +208,59 @@ def page_not_found(e):
 @app.route('/quiz')
 def quiz():
     #id=current_user.id
-    enrolled_courses = current_user.courses
+    enrolled_courses = Course.query.all()
 
     return render_template('quiz.html', 
                             enrolled_courses=enrolled_courses )
+
+
+# Forum Selection Page
+@login_required
+@app.route('/forum' , methods=['GET', 'POST'])
+def forum_list():
+    id=current_user.id
+    enrolled_courses = get_courses_to_enroll(id)
+
+    return render_template('forum_list.html', 
+                            enrolled_courses=enrolled_courses )
+
+# Selected Forum Page
+@login_required
+@app.route('/forum/<int:id>', methods=['GET', 'POST'])
+def forum_page(id):
+    #id=current_user.id
+    #enrolled_courses = Course.query.all()
+
+    return render_template('forum.html', )
+
+@app.route('/enrol/<int:id>', methods=['GET', 'POST'])
+@login_required
+def enroll(id):
+    if request.method == 'POST':
+        user_id = current_user.id 
+        course_id = request.form.get('course_id')
+
+        course = Course.query.get(course_id)
+        
+
+        if current_user and course:
+            enrollment = Enrollment(
+                user_id=user_id,
+                course_id=course_id,
+                enrollmentDate=datetime.now(),
+            )
+
+            db.session.add(enrollment)
+            db.session.commit()
+
+            return redirect(url_for('dashboard'))
+
+        else:
+            return "Student or COurse not found"
+    courses = Course.query.all()
+    enrolled_courses = get_courses_to_enroll(id)
+    return render_template('enrolment.html', 
+                            courses=courses , enrolled_courses=enrolled_courses)
 
 # Quiz Selection Page
 @login_required
@@ -306,7 +358,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=False, unique=True)
     role = db.Column(db.String(50), nullable=False)
-    #favorite_color = db.Column(db.String(120))
+    enrolments = db.relationship('Enrollment', backref='enroller')
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     #Do some password stuff
     password_hash = db.Column(db.String(128))
@@ -335,6 +387,7 @@ class User(db.Model, UserMixin):
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
+    enrollments = db.relationship('Enrollment', backref='course')
     quiz_sets = db.relationship('QuizSet', backref='course')
 
 # Create quiz_set Model
@@ -365,6 +418,27 @@ class QuizSubmission(db.Model):
     given_answer =  db.Column(db.Integer, nullable=False)
     is_correct_answer = db.Column(db.Boolean, default=False, nullable=False)
 
+class Enrollment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
+    enrollmentDate = db.Column(db.DateTime, default=datetime.utcnow)
+
+def get_enrolled_courses(user_id):
+    user = User.query.get(user_id)
+    if user:
+        return [enrollment.course.name for enrollment in user.enrolments]
+    else:
+        return []
+    
+def get_courses_to_enroll(user_id):
+    user = User.query.get(user_id)
+    courses = Course.query.all()
+    enrolled_courses = [enrollment.course for enrollment in user.enrolments]
+    if user:
+        return enrolled_courses 
+    else:
+        return []
 
 if __name__ == '__main__':
     app.run(debug=True)

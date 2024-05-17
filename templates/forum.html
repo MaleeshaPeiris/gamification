@@ -8,13 +8,25 @@
                 </br>
                 <p class="post-info">Posted by user ID: {{ post.user_id }} | Date: {{ post.posted_date }}</p>
                 <p>{{ post.content }}</p>
-                <a class="btn btn-secondary btn-sm">Comment</a>
+
+                <form method="POST" action="{{ url_for('forum_page', id=id) }}">
+                    {{ comment_form.hidden_tag() }}
+
+                    <input type="hidden" name="post_id" value="{{ post.id }}">
+                    <div>
+                        {{ comment_form.comment }}
+                    </div>
+                    <div>
+                        {{ comment_form.submit() }}
+                    </div>
+                </form>
+                
                 </br>
             </div>
             <!-- Display comments for each post -->
             {% for comment in comments %}
                 {% if comment.post_id == post.id %}
-                    <div>
+                    <div class="comment">
                         <p class="post-info">Comment by user ID: {{ comment.user_id }} | Date: {{ comment.commented_date }}</p>
                         <p>{{ comment.content }}</p>
                     </div>

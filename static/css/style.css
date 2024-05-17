@@ -29,3 +29,18 @@ body{
 #posts-container {
     padding-bottom: 200px; /* Adjust the value as needed */
 }
+
+/* Hide the comment text areas by default */
+.comment-textarea {
+    display: none;
+}
+
+/* Show the comment text area when its corresponding anchor link is targeted */
+.comment-textarea:target {
+    display: block;
+}
+
+/* Add indentation (tab space) before comments */
+.comment {
+    margin-left: 30px; /* Adjust the indentation as needed */
+}

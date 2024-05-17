@@ -5,13 +5,11 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exists, select
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash 
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from webforms import UserForm, LoginForm, PostForm, SearchForm, NamerForm, PasswordForm,NewPostForm,NewCommentForm
+from flask_login import  UserMixin,login_user, LoginManager, login_required, logout_user, current_user
+from webforms import UserForm, LoginForm,  SearchForm, NamerForm, PasswordForm,NewPostForm,NewCommentForm
 from flask_ckeditor import CKEditor
-import numpy as np
+from models import db,User,Course,Enrollment,QuizSet,QuizQuestion,QuizSubmission,Post,Comment
 
-#export FLASK_ENV=development
-#export FLASK_APP=gamification.py
 
 
 #create a Flask instance
@@ -26,7 +24,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost
 #Secret Key
 app.config['SECRET_KEY'] = "@45665Fdsdss456kl"
 #Initialize the Database
-db = SQLAlchemy(app)
+db.init_app(app)
 migrate=Migrate(app,db)
 app.app_context().push()
 
@@ -208,7 +206,7 @@ def page_not_found(e):
 @app.route('/quiz')
 def quiz():
     #id=current_user.id
-    enrolled_courses = Course.query.all()
+    enrolled_courses = get_courses_to_enroll(current_user.id)
 
     return render_template('quiz.html', 
                             enrolled_courses=enrolled_courses )
@@ -357,8 +355,6 @@ def quiz_exam(quiz_set_id):
                             total_correct_answer=total_correct_answer)
 
 
-
-
 # Create Admin
 @app.route('/admin')
 @login_required
@@ -369,112 +365,6 @@ def admin():
     else:
         flash("Sorry you must be the Admin to access the admin page...")
         return redirect(url_for('dashboard'))
-
-################################################################ DB Models ################################################################################
-
-user_course = db.Table('user_course',
-                    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-                    db.Column('course_id', db.Integer, db.ForeignKey('course.id'))
-                    )
-
-# Create Model
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(200), nullable=False)
-    last_name = db.Column(db.String(200), nullable=False)
-    username = db.Column(db.String(20), nullable=False, unique=True)
-    email = db.Column(db.String(120), nullable=False, unique=True)
-    role = db.Column(db.String(50), nullable=False)
-    enrolments = db.relationship('Enrollment', backref='enroller')
-    date_added = db.Column(db.DateTime, default=datetime.utcnow)
-    #Do some password stuff
-    password_hash = db.Column(db.String(128))
-    #User Can Have Many Courses
-    courses = db.relationship('Course', secondary=user_course, backref='users') #user.courses + course.users (backref comes into play)
-    #User Can Have Many QuizSubmission
-    quiz_submissions = db.relationship('QuizSubmission', backref='quiz_taker')
-
-    @property
-    def password(self):
-        raise AttributeError('password is not a readable attribute!')
-
-    @password.setter
-    def password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def verify_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    # Create A String
-    def __repr__(self):
-        return '<Name %r>' % self.name
-
-
-# Create Course Model
-class Course(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    enrollments = db.relationship('Enrollment', backref='course')
-    quiz_sets = db.relationship('QuizSet', backref='course')
-
-# Create quiz_set Model
-class QuizSet(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
-    quiz_questions = db.relationship('QuizQuestion', backref='quiz_set')
-    quiz_submissions = db.relationship('QuizSubmission', backref='quiz_set')
-
-class QuizQuestion(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    question = db.Column(db.String(255), nullable=False)
-    option1 = db.Column(db.String(255), nullable=False)
-    option2 = db.Column(db.String(255), nullable=False)
-    option3 = db.Column(db.String(255), nullable=False)
-    option4 = db.Column(db.String(255), nullable=False)
-    correct_answer = db.Column(db.Integer, nullable=False)
-    quiz_set_id = db.Column(db.Integer, db.ForeignKey('quiz_set.id'))
-    quiz_submissions = db.relationship('QuizSubmission', backref='quiz_question')
-
-
-class QuizSubmission(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    quiz_set_id = db.Column(db.Integer, db.ForeignKey('quiz_set.id'))
-    quiz_question_id = db.Column(db.Integer, db.ForeignKey('quiz_question.id')) 
-    given_answer =  db.Column(db.Integer, nullable=False)
-    is_correct_answer = db.Column(db.Boolean, default=False, nullable=False)
-
-class Enrollment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'))
-    enrollmentDate = db.Column(db.DateTime, default=datetime.utcnow)
-
-class DiscussionForum(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
-
-    course = db.relationship('Course', backref='discussion_forum')
-
-
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    discussion_forum_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    posted_date = db.Column(db.DateTime, default=datetime.utcnow)
-    content = db.Column(db.Text)
-    course = db.relationship('Course', backref='posts')
-
-class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    content = db.Column(db.Text)
-    commented_date = db.Column(db.DateTime, default=datetime.utcnow)
-    post = db.relationship('Post', backref=db.backref('comments', lazy=True))
 
 
 def get_enrolled_courses(user_id):
